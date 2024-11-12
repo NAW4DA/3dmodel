@@ -162,7 +162,7 @@
   <div id="container">
     <div id="qr-container">
       <h1 class="text">3D-MODEL VIEW</h1>
-      <img src="../3d/clck.png" alt="QR Code">
+      <img src="./3d/clck.png" alt="QR Code">
       <p class="text">Вам представлена 3D-модель контейнера для отходов. <span style="color: rgb(80, 255, 246)">Сканируйте QR-Code для продолжения!</span></p>
     </div>
     <div id="viewer-container"></div>
@@ -191,11 +191,11 @@
 
     let model;
     const mtlLoader = new THREE.MTLLoader();
-    mtlLoader.load('../3d/musorka.mtl', (materials) => {
+    mtlLoader.load('./3d/musorka.mtl', (materials) => {
       materials.preload();
       const objLoader = new THREE.OBJLoader();
       objLoader.setMaterials(materials);
-      objLoader.load('../3d/musorka.obj', (object) => {
+      objLoader.load('./3d/musorka.obj', (object) => {
         object.scale.set(0.003, 0.003, 0.003);
         model = object;
         scene.add(model);
