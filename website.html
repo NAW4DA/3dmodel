@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biology 3D Model Viewer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pale-red: #ff6767;
+      --background: #121212;
+      --primary-text: #ffffff;
+      --secondary-text: #c3c3c3;
+      --button-bg: #444444;
+      --button-hover-bg: #666666;
+      --border: #888888;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: 'TopazPlus', sans-serif;
+      background-color: var(--background);
+      color: var(--primary-text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    @font-face {
+      font-family: 'TopazPlus';
+      src: url('./3d/TopazPlus.ttf') format('truetype');
+    }
+
+    @font-face {
+      font-family: 'Multiround';
+      src: url('./3d/MultiroundPro.otf') format('truetype');
+    }
+
+    #container {
+      display: flex;
+      flex-direction: row;
+      width: 90%;
+      height: 90%;
+      max-width: 1200px;
+      max-height: 700px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--background);
+      border: 2px solid var(--border);
+    }
+
+    .text {
+      font-family: 'Multiround';
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+      color: var(--pale-red);
+    }
+
+    #qr-container {
+      width: 30%;
+      min-width: 250px;
+      background-color: var(--button-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 20px;
+      box-shadow: inset 2px 0 8px rgba(0, 0, 0, 0.5);
+    }
+
+    #qr-container h1 {
+      font-weight: 700;
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+      text-align: center;
+      color: var(--pale-red);
+      animation: flicker1 2s infinite;
+    }
+
+    #qr-container img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    #qr-container p {
+      color: var(--secondary-text);
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    #viewer-container {
+      width: 70%;
+      position: relative;
+      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+      border-left: 2px solid var(--border);
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      #container {
+        flex-direction: column;
+        height: auto;
+      }
+
+      #qr-container {
+        width: 100%;
+        min-width: 0;
+        padding: 10px 20px;
+        box-shadow: none;
+        border-bottom: 2px solid var(--border);
+      }
+
+      #viewer-container {
+        width: 100%;
+        height: 400px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #qr-container h1 {
+        font-size: 1.2rem;
+      }
+
+      #viewer-container {
+        height: 300px;
+      }
+    }
+
+    .flicker-text {
+      color: var(--pale-red);
+      animation: brokenFlicker 3s infinite;
+    }
+
+    @keyframes brokenFlicker {
+      0%, 18%, 22%, 25%, 53%, 57%, 100% {
+        opacity: 1;
+      }
+
+      20%, 24%, 55% {
+        opacity: 0.7;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="qr-container">
+      <h1 class="text">3D-MODEL VIEW</h1>
+      <img src="../3d/clck.png" alt="QR Code">
+      <p class="text">Вам представлена 3D-модель контейнера для отходов. <span style="color: rgb(80, 255, 246)">Сканируйте QR-Code для продолжения!</span></p>
+    </div>
+    <div id="viewer-container"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/OBJLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/MTLLoader.js"></script>
+
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth * 0.7 / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth * 0.7, window.innerHeight);
+    document.getElementById('viewer-container').appendChild(renderer.domElement);
+
+    // Камера фиксированная
+    camera.position.set(1.2, -0.7, 5);  // Установим камеру под углом
+
+    // Освещение
+    const ambientLight = new THREE.AmbientLight(0xaaaaaa, 1.5);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, 10, 10).normalize();
+    scene.add(directionalLight);
+
+    let model;
+    const mtlLoader = new THREE.MTLLoader();
+    mtlLoader.load('../3d/musorka.mtl', (materials) => {
+      materials.preload();
+      const objLoader = new THREE.OBJLoader();
+      objLoader.setMaterials(materials);
+      objLoader.load('../3d/musorka.obj', (object) => {
+        object.scale.set(0.003, 0.003, 0.003);
+        model = object;
+        scene.add(model);
+      });
+    });
+    function animate() {
+      requestAnimationFrame(animate);
+      if (model) model.rotation.y += 0.01; // Плавное вращение модели вокруг оси Y
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      const containerWidth = document.getElementById('viewer-container').clientWidth;
+      renderer.setSize(containerWidth, window.innerHeight * 0.7);
+      camera.aspect = containerWidth / window.innerHeight * 0.7;
+      camera.updateProjectionMatrix();
+    });
+  </script>  
+</body>
+</html>
